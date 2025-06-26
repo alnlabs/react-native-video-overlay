@@ -1,4 +1,4 @@
-package com.videooverlay
+package com.alnlabs.videooverlay
 
 import com.facebook.react.TurboReactPackage
 import com.facebook.react.bridge.NativeModule

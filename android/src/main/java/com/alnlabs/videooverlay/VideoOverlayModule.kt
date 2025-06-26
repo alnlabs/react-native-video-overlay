@@ -1,4 +1,4 @@
-package com.videooverlay
+package com.alnlabs.videooverlay
 
 import android.content.res.AssetManager
 import android.util.Log

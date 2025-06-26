@@ -16,7 +16,7 @@ apply plugin: "com.android.library"
 apply plugin: "kotlin-android"
 
 android {
-  namespace "com.videooverlay"
+  namespace "com.alnlabs.videooverlay"
 
   compileSdkVersion 34
 
