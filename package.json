@@ -1,6 +1,6 @@
 {
   "name": "react-native-video-overlay",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "A lightweight React Native Turbo Module (Android only) that adds image and text overlays to videos using FFmpeg. Perfect for content review, watermarking, and branded video generation.",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
