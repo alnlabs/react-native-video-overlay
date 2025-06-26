@@ -1,6 +1,5 @@
 package com.alnlabs.videooverlay
 
-import android.content.res.AssetManager
 import android.util.Log
 import com.facebook.react.bridge.*
 import com.facebook.react.module.annotations.ReactModule
@@ -8,9 +7,8 @@ import com.facebook.react.turbomodule.core.interfaces.TurboModule
 import java.io.*
 
 @ReactModule(name = VideoOverlayModule.NAME)
-class VideoOverlayModule(
-  reactContext: ReactApplicationContext
-) : ReactContextBaseJavaModule(reactContext), TurboModule {
+class VideoOverlayModule(reactContext: ReactApplicationContext) :
+  ReactContextBaseJavaModule(reactContext), TurboModule {
 
   companion object {
     const val NAME = "VideoOverlay"
@@ -28,44 +26,42 @@ class VideoOverlayModule(
       val overlays = options.getArray("overlays") ?: return promise.reject("NO_OVERLAYS", "At least one overlay is required")
 
       val ffmpegFile = File(reactApplicationContext.filesDir, FFMPEG_FILENAME)
-      if (!ffmpegFile.exists()) {
-        return promise.reject("FFMPEG_MISSING", "FFmpeg binary is not bundled")
-      }
+      if (!ffmpegFile.exists()) return promise.reject("FFMPEG_MISSING", "FFmpeg binary is not bundled")
       ffmpegFile.setExecutable(true)
 
       val inputs = mutableListOf("-i", inputPath)
       val filterParts = mutableListOf<String>()
-
-      // Track input indices for images
       var imageIndex = 1
+
       for (i in 0 until overlays.size()) {
         val overlay = overlays.getMap(i) ?: continue
         when (overlay.getString("type")) {
           "image" -> {
-            val path = overlay.getString("path") ?: continue
-            val x = overlay.getInt("x")
-            val y = overlay.getInt("y")
-            val w = overlay.getInt("width")
-            val h = overlay.getInt("height")
+            val source = overlay.getString("source") ?: continue
+            val width = overlay.getInt("width")
+            val height = overlay.getInt("height")
             val opacity = overlay.getDouble("opacity")
+            val (x, y) = getPosition(overlay)
 
             inputs.add("-i")
-            inputs.add(path)
+            inputs.add(source)
 
-            val overlayFilter = "[${imageIndex}:v]scale=${w}:${h}[img${i}];[0:v][img${i}]overlay=${x}:${y}:format=auto:alpha=${opacity}"
-            filterParts.add(overlayFilter)
+            val scaled = "[${imageIndex}:v]scale=${width}:${height}[img${i}]"
+            val overlayCmd = "[0:v][img${i}]overlay=${x}:${y}:format=auto:alpha=${opacity}"
+            filterParts.add("$scaled;$overlayCmd")
+
             imageIndex++
           }
 
           "text" -> {
             val text = overlay.getString("text") ?: ""
-            val x = overlay.getInt("x")
-            val y = overlay.getInt("y")
-            val fontSize = overlay.getInt("fontSize")
-            val color = overlay.getString("color") ?: "white"
-            val font = "/system/fonts/DroidSans.ttf"
+            val fontSize = if (overlay.hasKey("fontSize")) overlay.getInt("fontSize") else 24
+            val color = overlay.getString("fontColor") ?: "white"
+            val opacity = if (overlay.hasKey("opacity")) overlay.getDouble("opacity") else 1.0
+            val font = overlay.getString("fontPath") ?: "/system/fonts/DroidSans.ttf"
+            val (x, y) = getPosition(overlay)
 
-            val draw = "drawtext=fontfile='$font':text='${text}':x=${x}:y=${y}:fontsize=${fontSize}:fontcolor=${color}"
+            val draw = "drawtext=fontfile='$font':text='${text}':x=${x}:y=${y}:fontsize=$fontSize:fontcolor=${color}@${opacity}"
             filterParts.add(draw)
           }
         }
@@ -93,5 +89,33 @@ class VideoOverlayModule(
       Log.e(TAG, "applyOverlay failed", e)
       promise.reject("FFMPEG_ERROR", e.message, e)
     }
+  }
+
+  private fun getPosition(overlay: ReadableMap): Pair<String, String> {
+    // Handle custom position
+    if (overlay.hasKey("position")) {
+      val pos = overlay.getDynamic("position")
+      if (pos.type == ReadableType.Map) {
+        val map = pos.asMap()
+        val x = map.getDouble("x").toInt()
+        val y = map.getDouble("y").toInt()
+        return Pair("$x", "$y")
+      }
+
+      val str = pos.asString()
+      return when (str) {
+        "top-left" -> Pair("10", "10")
+        "top-center" -> Pair("(main_w-text_w)/2", "10")
+        "top-right" -> Pair("main_w-overlay_w-10", "10")
+        "center-left" -> Pair("10", "(main_h-text_h)/2")
+        "center" -> Pair("(main_w-overlay_w)/2", "(main_h-overlay_h)/2")
+        "center-right" -> Pair("main_w-overlay_w-10", "(main_h-overlay_h)/2")
+        "bottom-left" -> Pair("10", "main_h-overlay_h-10")
+        "bottom-center" -> Pair("(main_w-overlay_w)/2", "main_h-overlay_h-10")
+        "bottom-right" -> Pair("main_w-overlay_w-10", "main_h-overlay_h-10")
+        else -> Pair("10", "10") // fallback
+      }
+    }
+    return Pair("10", "10") // default
   }
 }

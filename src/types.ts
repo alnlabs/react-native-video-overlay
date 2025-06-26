@@ -2,10 +2,14 @@
 
 export type PredefinedPosition =
   | 'top-left'
+  | 'top-center'
   | 'top-right'
+  | 'center-left'
+  | 'center'
+  | 'center-right'
   | 'bottom-left'
-  | 'bottom-right'
-  | 'center';
+  | 'bottom-center'
+  | 'bottom-right';
 
 export type CustomPosition = {
   x: number;
@@ -22,6 +26,7 @@ export interface TextOverlay extends BaseOverlay {
   text: string;
   fontSize?: number;
   fontColor?: string;
+  fontPath?: string;
 }
 
 export interface ImageOverlay extends BaseOverlay {
