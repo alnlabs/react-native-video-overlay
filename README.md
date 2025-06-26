@@ -7,6 +7,14 @@
 
 ---
 
+## ⚠️ Experimental Notice
+
+> This library is currently **under testing** and may not be fully stable in production environments.
+> Use at your own risk. We **do not guarantee** correctness or support at this stage.
+> **External contributions are not being accepted** at this time.
+
+---
+
 ## ✨ Features
 
 - ⚡ Fast FFmpeg-based video overlay processing
