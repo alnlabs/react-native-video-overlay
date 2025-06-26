@@ -1,7 +1,7 @@
 // src/index.ts
 
 import { Platform } from 'react-native';
-import VideoOverlayModule from './specs/VideoOverlaySpec'; // TurboModule binding
+import VideoOverlayModule from './VideoOverlaySpec';
 import type {
   OverlayOptions,
   Overlay,
